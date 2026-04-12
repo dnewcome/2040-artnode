@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# KiCad backups and autosave
+*.kicad_sch-bak
+*.kicad_pcb-bak
+*.kicad_pro-bak
+*-backups/
+_autosave-*
+*.lck
+
+# KiCad outputs (regenerate via KiCad)
+gerbers/
+*.zip
