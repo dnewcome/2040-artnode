@@ -74,6 +74,7 @@ def comp(lib_id, ref, value, fp, x, y, lcsc="", angle=0, extra_props=None, hide_
 PIN_LEN = 2.54
 
 def build_symbol(sym_name, body, pins, pin_names_offset=1.016):
+    _sym_pin_defs[sym_name] = (body, pins)
     """
     body = (x1, y1, x2, y2)  — the rectangle corners
     pins = list of (side, offset, name, num, ptype)
@@ -122,7 +123,8 @@ def build_symbol(sym_name, body, pins, pin_names_offset=1.016):
 # ---------------------------------------------------------------------------
 
 lib_symbols = []
-all_endpoints = {}  # sym_name -> endpoints dict
+all_endpoints = {}   # sym_name -> endpoints dict (pin_name -> (px, py))
+_sym_pin_defs = {}   # sym_name -> (body, pins)  — used for netlist extraction
 
 # ── RP2354A ─────────────────────────────────────────────────────────────────
 # RP2354A is the QFN-60 RP2350A variant with 2MB flash-in-package.
@@ -458,7 +460,7 @@ noconns = []   # (x, y)
 def pin_ep(sym_name, cx, cy, pin_name):
     ep = all_endpoints[sym_name]
     px, py = ep[pin_name]
-    return cx+px, cy+py
+    return cx+px, cy-py
 
 def place_power(net, sym, cx, cy, pin_name, gnd=False, angle=0):
     """Wire power symbol to a component pin"""
@@ -1065,4 +1067,52 @@ sch_path = DIR / f"{PROJECT}.kicad_sch"
 with open(sch_path,'w') as f:
     f.write(out)
 print(f"Schematic written: {sch_path} ({len(out):,} bytes, {len(lines)} lines)")
+
+# ---------------------------------------------------------------------------
+# Netlist extraction — must run after all components/labels/pwrs are defined
+# ---------------------------------------------------------------------------
+
+def build_netlist():
+    """Build {ref: {pad_num: net_name}} by matching pin positions to net labels."""
+    import json
+
+    # Map schematic position → net name (labels take priority over power syms)
+    pos_to_net = {}
+    for net, x, y, _angle in pwrs:
+        pos_to_net[(round(x, 3), round(y, 3))] = net
+    for entry in labels:
+        name, x, y = entry[0], entry[1], entry[2]
+        pos_to_net[(round(x, 3), round(y, 3))] = name
+
+    netlist = {}
+    for sym_name, ref, _val, _fp, cx, cy, _lcsc in components:
+        if sym_name not in _sym_pin_defs:
+            continue
+        body, pins = _sym_pin_defs[sym_name]
+        x1, y1, x2, y2 = body
+        ref_nets = {}
+        for side, off, _name, num, _ptype in pins:
+            if side == 'L':
+                px, py = x1 - PIN_LEN, off
+            elif side == 'R':
+                px, py = x2 + PIN_LEN, off
+            elif side == 'T':
+                px, py = off, y1 - PIN_LEN
+            else:  # B
+                px, py = off, y2 + PIN_LEN
+            # Match pin_ep: abs = (cx+px, cy-py)
+            key = (round(cx + px, 3), round(cy - py, 3))
+            net = pos_to_net.get(key)
+            if net:
+                ref_nets[num] = net
+        netlist[ref] = ref_nets
+    return netlist
+
+import json
+netlist = build_netlist()
+nl_path = DIR / "netlist.json"
+with open(nl_path, 'w') as f:
+    json.dump(netlist, f, indent=2)
+assigned = sum(len(v) for v in netlist.values())
+print(f"Netlist written: {nl_path} ({len(netlist)} refs, {assigned} pin assignments)")
 print("Done.")
