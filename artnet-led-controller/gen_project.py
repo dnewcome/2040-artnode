@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-DIR = Path("/Users/dannewcome/sandbox/2040-node/artnet-led-controller")
+DIR = Path(__file__).resolve().parent
 PROJ = "artnet-led-controller"
 
 proj = {

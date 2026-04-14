@@ -6,7 +6,7 @@ Generates artnet-led-controller.kicad_sch (self-contained, all symbols inline)
 import uuid, json
 from pathlib import Path
 
-DIR = Path("/Users/dannewcome/sandbox/2040-node/artnet-led-controller")
+DIR = Path(__file__).resolve().parent
 PROJECT = "artnet-led-controller"
 _pwr_n = 0
 
@@ -27,7 +27,7 @@ def net_label(name, x, y, angle=0):
             f'    (effects (font (size 1.27 1.27))(justify left))\n'
             f'    (uuid "{u()}")\n'
             f'    (property "Intersheet References" "" (at {x:.3f} {y:.3f} 0)\n'
-            f'      (effects (font (size 1.27 1.27)) hide))\n'
+            f'      (effects (font (size 1.27 1.27))(hide yes)))\n'
             f'  )')
 
 def power_sym(net, x, y, angle=0):
@@ -37,10 +37,10 @@ def power_sym(net, x, y, angle=0):
     yv = y-2.54 if angle==0 else y+2.54
     return (f'  (symbol (lib_id "power:{net}") (at {x:.3f} {y:.3f} {angle})(unit 1)(in_bom yes)(on_board yes)\n'
             f'    (uuid "{u()}")\n'
-            f'    (property "Reference" "{ref}" (at {x:.3f} {ya:.3f} 0)(effects (font (size 1.27 1.27)) hide))\n'
+            f'    (property "Reference" "{ref}" (at {x:.3f} {ya:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))\n'
             f'    (property "Value" "{net}" (at {x:.3f} {yv:.3f} 0)(effects (font (size 1.27 1.27))))\n'
-            f'    (property "Footprint" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))\n'
-            f'    (property "Datasheet" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))\n'
+            f'    (property "Footprint" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))\n'
+            f'    (property "Datasheet" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))\n'
             f'    (instances (project "{PROJECT}" (path "/{u()}" (reference "{ref}")(unit 1))))\n'
             f'  )')
 
@@ -50,14 +50,14 @@ def comp(lib_id, ref, value, fp, x, y, lcsc="", angle=0, extra_props=None, hide_
         f'  (symbol (lib_id "{lib_id}") (at {x:.3f} {y:.3f} {angle})(unit 1)(in_bom yes)(on_board yes)',
         f'    (uuid "{u()}")',
         f'    (property "Reference" "{ref}" (at {x:.3f} {y-3.81:.3f} 0)(effects (font (size 1.27 1.27))))',
-        f'    (property "Value" "{value}" (at {x:.3f} {y+3.81:.3f} 0)(effects (font (size 1.27 1.27)){"(hide)" if hide_val else ""}))',
-        f'    (property "Footprint" "{fp}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))',
-        f'    (property "Datasheet" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))',
+        f'    (property "Value" "{value}" (at {x:.3f} {y+3.81:.3f} 0)(effects (font (size 1.27 1.27)){"(hide yes)" if hide_val else ""}))',
+        f'    (property "Footprint" "{fp}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))',
+        f'    (property "Datasheet" "" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))',
     ]
     if lcsc:
-        lines.append(f'    (property "LCSC" "{lcsc}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))')
+        lines.append(f'    (property "LCSC" "{lcsc}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))')
     for k,v in props.items():
-        lines.append(f'    (property "{k}" "{v}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27)) hide))')
+        lines.append(f'    (property "{k}" "{v}" (at {x:.3f} {y:.3f} 0)(effects (font (size 1.27 1.27))(hide yes)))')
     lines.append(f'    (instances (project "{PROJECT}" (path "/{u()}" (reference "{ref}")(unit 1))))')
     lines.append('  )')
     return '\n'.join(lines)
@@ -86,6 +86,8 @@ def build_symbol(sym_name, body, pins, pin_names_offset=1.016):
     endpoints = {}
     pin_lines = []
     for side, off, name, num, ptype in pins:
+        if ptype == 'bidir':
+            ptype = 'bidirectional'
         if side == 'L':
             px, py, ang = x1-PIN_LEN, off, 0
         elif side == 'R':
@@ -110,8 +112,8 @@ def build_symbol(sym_name, body, pins, pin_names_offset=1.016):
                 f'      (in_bom yes)(on_board yes)\n'
                 f'      (property "Reference" "U" (at 0 {y1-3.81:.3f} 0)(effects (font (size 1.27 1.27))))\n'
                 f'      (property "Value" "{sym_name}" (at 0 {y2+3.81:.3f} 0)(effects (font (size 1.27 1.27))))\n'
-                f'      (property "Footprint" "" (at 0 0 0)(effects (font (size 1.27 1.27)) hide))\n'
-                f'      (property "Datasheet" "" (at 0 0 0)(effects (font (size 1.27 1.27)) hide))\n'
+                f'      (property "Footprint" "" (at 0 0 0)(effects (font (size 1.27 1.27))(hide yes)))\n'
+                f'      (property "Datasheet" "" (at 0 0 0)(effects (font (size 1.27 1.27))(hide yes)))\n'
                 + body_rect + pin_block + '    )\n')
     return sym_text, endpoints
 
@@ -122,7 +124,10 @@ def build_symbol(sym_name, body, pins, pin_names_offset=1.016):
 lib_symbols = []
 all_endpoints = {}  # sym_name -> endpoints dict
 
-# ── RP2040 ──────────────────────────────────────────────────────────────────
+# ── RP2354A ─────────────────────────────────────────────────────────────────
+# RP2354A is the QFN-60 RP2350A variant with 2MB flash-in-package.
+# Dedicated QSPI pads remain externally available and are shared with the
+# internal flash die, so do not route an external primary flash here.
 # Body: 40.64 wide, 63.5 tall → (-20.32,-31.75) to (+20.32,+31.75)
 rp_body = (-20.32, -31.75, 20.32, 31.75)
 S = 2.54  # step
@@ -137,65 +142,52 @@ def bpin(i, name, num, ptype='power_in'):
     return ('B', -8.89 + i*S, name, num, ptype)
 
 rp_pins = [
-    # Left side: GPIO0-13, XIN, XOUT, USB_DP, USB_DM, RUN, SWCLK, SWDIO
+    # Left side: GPIO0-15, XIN, XOUT, USB, RUN, SWD
     lpin(0,'GPIO0','2'),   lpin(1,'GPIO1','3'),   lpin(2,'GPIO2','4'),
-    lpin(3,'GPIO3','5'),   lpin(4,'GPIO4','6'),   lpin(5,'GPIO5','7'),
-    lpin(6,'GPIO6','8'),   lpin(7,'GPIO7','9'),   lpin(8,'GPIO8','10'),
-    lpin(9,'GPIO9','11'),  lpin(10,'GPIO10','12'),lpin(11,'GPIO11','13'),
-    lpin(12,'GPIO12','14'),lpin(13,'GPIO13','15'),
-    lpin(14,'XIN','45','input'), lpin(15,'XOUT','46','output'),
-    lpin(16,'USB_DP','48','bidir'), lpin(17,'USB_DM','47','bidir'),
-    lpin(18,'RUN','36','input'),
-    lpin(19,'SWCLK','37','input'), lpin(20,'SWDIO','38','bidir'),
-    # Right side: GPIO14-29, QSPI
-    rpin(0,'GPIO14','16'),  rpin(1,'GPIO15','17'),  rpin(2,'GPIO16','18'),
-    rpin(3,'GPIO17','19'),  rpin(4,'GPIO18','20'),  rpin(5,'GPIO19','21'),
-    rpin(6,'GPIO20','22'),  rpin(7,'GPIO21','23'),  rpin(8,'GPIO22','24'),
-    rpin(9,'GPIO23','25'),  rpin(10,'GPIO24','26'), rpin(11,'GPIO25','27'),
-    rpin(12,'GPIO26','28'), rpin(13,'GPIO27','29'), rpin(14,'GPIO28','30'),
-    rpin(15,'GPIO29','31'),
-    rpin(16,'QSPI_SS_N','43','output'),
-    rpin(17,'QSPI_SCLK','42','output'),
-    rpin(18,'QSPI_SD0','39','bidir'),
-    rpin(19,'QSPI_SD1','41','bidir'),
-    rpin(20,'QSPI_SD2','40','bidir'),
-    rpin(21,'QSPI_SD3','44','bidir'),
-    rpin(22,'TESTEN','49','input'),
+    lpin(3,'GPIO3','5'),   lpin(4,'GPIO4','7'),   lpin(5,'GPIO5','8'),
+    lpin(6,'GPIO6','9'),   lpin(7,'GPIO7','10'),  lpin(8,'GPIO8','12'),
+    lpin(9,'GPIO9','13'),  lpin(10,'GPIO10','14'),lpin(11,'GPIO11','15'),
+    lpin(12,'GPIO12','16'),lpin(13,'GPIO13','17'),lpin(14,'GPIO14','18'),
+    lpin(15,'GPIO15','19'),lpin(16,'XIN','21','input'), lpin(17,'XOUT','22','output'),
+    lpin(18,'USB_DP','52','bidir'), lpin(19,'USB_DM','51','bidir'),
+    lpin(20,'RUN','26','input'),
+    lpin(21,'SWCLK','24','input'), lpin(22,'SWDIO','25','bidir'),
+    # Right side: GPIO16-29, QSPI
+    rpin(0,'GPIO16','27'),  rpin(1,'GPIO17','28'),  rpin(2,'GPIO18','29'),
+    rpin(3,'GPIO19','31'),  rpin(4,'GPIO20','32'),  rpin(5,'GPIO21','33'),
+    rpin(6,'GPIO22','34'),  rpin(7,'GPIO23','35'),  rpin(8,'GPIO24','36'),
+    rpin(9,'GPIO25','37'),  rpin(10,'GPIO26','40'), rpin(11,'GPIO27','41'),
+    rpin(12,'GPIO28','42'), rpin(13,'GPIO29','43'),
+    rpin(14,'QSPI_SS','60','bidir'),
+    rpin(15,'QSPI_SCLK','56','bidir'),
+    rpin(16,'QSPI_SD0','57','bidir'),
+    rpin(17,'QSPI_SD1','59','bidir'),
+    rpin(18,'QSPI_SD2','58','bidir'),
+    rpin(19,'QSPI_SD3','55','bidir'),
     # Top: power
-    tpin(0,'IOVDD','1','power_in'),
-    tpin(1,'IOVDD','32','power_in'),
-    tpin(2,'USB_VDD','50','power_in'),
-    tpin(3,'ADC_AVDD','33','power_in'),
-    tpin(4,'VREG_VIN','34','power_in'),
-    # Bottom: GND + VREG_VOUT
-    bpin(0,'GND','35','power_in'),
-    bpin(1,'GND','51','power_in'),
-    bpin(2,'GND','52','power_in'),
-    bpin(3,'GND','53','power_in'),
-    bpin(4,'GND','54','power_in'),
-    bpin(5,'GND','55','power_in'),
-    bpin(6,'GND','56','power_in'),
-    bpin(7,'VREG_VOUT','35b','power_out'),
+    tpin(0,'IOVDD1','1','power_in'),
+    tpin(1,'IOVDD2','11','power_in'),
+    tpin(2,'IOVDD3','20','power_in'),
+    tpin(3,'IOVDD4','30','power_in'),
+    tpin(4,'IOVDD5','38','power_in'),
+    tpin(5,'IOVDD6','45','power_in'),
+    tpin(6,'USB_OTP_VDD','53','power_in'),
+    tpin(7,'QSPI_IOVDD','54','power_in'),
+    tpin(8,'ADC_AVDD','44','power_in'),
+    tpin(9,'VREG_AVDD','46','power_in'),
+    tpin(10,'VREG_VIN','49','power_in'),
+    # Bottom: GND + core regulator pins
+    bpin(0,'DVDD1','6','power_in'),
+    bpin(1,'DVDD2','23','power_in'),
+    bpin(2,'DVDD3','39','power_in'),
+    bpin(3,'GND','61','power_in'),
+    bpin(4,'VREG_PGND','47','power_in'),
+    bpin(5,'VREG_LX','48','power_out'),
+    bpin(6,'VREG_FB','50','input'),
 ]
-sym, ep = build_symbol('RP2040', rp_body, rp_pins)
+sym, ep = build_symbol('RP2354A', rp_body, rp_pins)
 lib_symbols.append(sym)
-all_endpoints['RP2040'] = ep
-
-# ── W25Q16JV Flash (SOP-8) ──────────────────────────────────────────────────
-fl_body = (-5.08, -5.08, 5.08, 5.08)
-fl_pins = [
-    ('L', -2.54, '/CS',  '1', 'input'),
-    ('L',  0,    'DO',   '2', 'output'),
-    ('L',  2.54, '/WP',  '3', 'input'),
-    ('B',  0,    'GND',  '4', 'power_in'),
-    ('R', -2.54, 'DI',   '5', 'input'),
-    ('R',  0,    'CLK',  '6', 'input'),
-    ('R',  2.54, '/HOLD','7', 'input'),
-    ('T',  0,    'VCC',  '8', 'power_in'),
-]
-sym, ep = build_symbol('W25Q16JV', fl_body, fl_pins)
-lib_symbols.append(sym)
-all_endpoints['W25Q16JV'] = ep
+all_endpoints['RP2354A'] = ep
 
 # ── W5500 (LQFP-48) ─────────────────────────────────────────────────────────
 # 12 pins each side
@@ -509,7 +501,7 @@ def decap(net, cx, cy, val='100nF', lcsc='C14663'):
 # USB-C connector
 USBC_X, USBC_Y = 30, 35
 components.append(('USB_C_Receptacle','J1','USB4125-GF-A',
-    'Connector_USB:USB_C_Receptacle_GCT_USB4125_1x_1614',USBC_X,USBC_Y,'C165948'))
+    'Connector_USB:USB_C_Receptacle_GCT_USB4125-xx-x_6P_TopMnt_Horizontal',USBC_X,USBC_Y,'C165948'))
 connect('VUSB','USB_C_Receptacle',USBC_X,USBC_Y,'VBUS')
 connect('VUSB','USB_C_Receptacle',USBC_X,USBC_Y,'VBUS2')
 place_power('GND','USB_C_Receptacle',USBC_X,USBC_Y,'GND',gnd=True)
@@ -565,7 +557,7 @@ pwrs.append(('GND',x,y,270))
 L1_X, L1_Y = 108, 28
 components.append(('L','L1','22uH',
     'Inductor_SMD:L_0805_2012Metric',L1_X,L1_Y,'C1046'))
-# SW → L1 pin1, L1 pin2 → VCC5V
+# SW → L1 pin1, L1 pin2 → boost rectifier → VCC5V
 x,y=pin_ep('L',L1_X,L1_Y,'~')   # top pin (T)
 labels.append(('MT3608_SW',x,y))
 x,y=pin_ep('L',L1_X,L1_Y,'~')   # hmm both named ~; use top/bottom
@@ -577,7 +569,14 @@ tp_x,tp_y = L1_X + all_endpoints['L']['~'][0], L1_Y + all_endpoints['L']['~'][1]
 # L top: T pin → (0, l_body[1]-PIN_LEN) = (0, -2.032-2.54) = (0,-4.572)
 # L bottom: B pin → (0, l_body[3]+PIN_LEN) = (0, 2.032+2.54) = (0, 4.572)
 labels.append(('MT3608_SW', L1_X, L1_Y - 4.572))
-labels.append(('VCC5V',     L1_X, L1_Y + 4.572))
+labels.append(('VBOOST_RAW',L1_X, L1_Y + 4.572))
+
+# Boost rectifier diode
+D1_X, D1_Y = 118, 28
+components.append(('D_Schottky','D1','SS14',
+    'Diode_SMD:D_SOD-123',D1_X,D1_Y,'C2480'))
+labels.append(('VBOOST_RAW',D1_X,D1_Y-3.81))
+labels.append(('VCC5V',D1_X,D1_Y+3.81))
 
 # Boost converter feedback divider: R_top=750k (SW→FB), R_bot=100k (FB→GND)
 # R_top
@@ -643,82 +642,95 @@ decap('VCC3V3', AM_X+8,   AM_Y+8,   '10uF', 'C19702')
 decap('VCC3V3', AM_X+12,  AM_Y+8,   '100nF','C14663')
 decap('VCC3V3', AM_X+16,  AM_Y+8,   '100nF','C14663')
 
-# ─── RP2040 ───────────────────────────────────────────────────────────────────
+# ─── RP2354A ──────────────────────────────────────────────────────────────────
 RP_CX, RP_CY = 175, 130
-components.append(('RP2040','U1','RP2040',
-    'Package_DFN_QFN:QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm',RP_CX,RP_CY,'C2040'))
+components.append(('RP2354A','U1','RP2354A',
+    'Package_DFN_QFN:QFN-60-1EP_7x7mm_P0.4mm_EP3.4x3.4mm',RP_CX,RP_CY,'C41378174'))
 
 # GPIO → LED data lines
 for i,gpio in enumerate(['GPIO0','GPIO1','GPIO2','GPIO3']):
-    connect(f'LED{i+1}_DATA_3V3','RP2040',RP_CX,RP_CY,gpio)
+    connect(f'LED{i+1}_DATA_3V3','RP2354A',RP_CX,RP_CY,gpio)
 
 # I2C for OLED
-connect('I2C_SDA','RP2040',RP_CX,RP_CY,'GPIO4')
-connect('I2C_SCL','RP2040',RP_CX,RP_CY,'GPIO5')
+connect('I2C_SDA','RP2354A',RP_CX,RP_CY,'GPIO4')
+connect('I2C_SCL','RP2354A',RP_CX,RP_CY,'GPIO5')
 
 # SPI for W5500
-connect('SPI_MISO','RP2040',RP_CX,RP_CY,'GPIO16')
-connect('SPI_CS',  'RP2040',RP_CX,RP_CY,'GPIO17')
-connect('SPI_SCK', 'RP2040',RP_CX,RP_CY,'GPIO18')
-connect('SPI_MOSI','RP2040',RP_CX,RP_CY,'GPIO19')
-connect('W5500_INT','RP2040',RP_CX,RP_CY,'GPIO20')
-connect('W5500_RST','RP2040',RP_CX,RP_CY,'GPIO21')
+connect('SPI_MISO','RP2354A',RP_CX,RP_CY,'GPIO16')
+connect('SPI_CS',  'RP2354A',RP_CX,RP_CY,'GPIO17')
+connect('SPI_SCK', 'RP2354A',RP_CX,RP_CY,'GPIO18')
+connect('SPI_MOSI','RP2354A',RP_CX,RP_CY,'GPIO19')
+connect('W5500_INT','RP2354A',RP_CX,RP_CY,'GPIO20')
+connect('W5500_RST','RP2354A',RP_CX,RP_CY,'GPIO21')
 
 # Buttons
-connect('BTN1','RP2040',RP_CX,RP_CY,'GPIO22')
-connect('BTN2','RP2040',RP_CX,RP_CY,'GPIO23')
+connect('BTN1','RP2354A',RP_CX,RP_CY,'GPIO22')
+connect('BTN2','RP2354A',RP_CX,RP_CY,'GPIO23')
 
 # Unused GPIO → NC or label
 for g in ['GPIO6','GPIO7','GPIO8','GPIO9','GPIO10','GPIO11','GPIO12','GPIO13',
           'GPIO14','GPIO15','GPIO24','GPIO25','GPIO26','GPIO27','GPIO28','GPIO29']:
-    nc('RP2040',RP_CX,RP_CY,g)
+    nc('RP2354A',RP_CX,RP_CY,g)
 
-# QSPI flash connections
-connect('QSPI_SS_N', 'RP2040',RP_CX,RP_CY,'QSPI_SS_N')
-connect('QSPI_SCLK', 'RP2040',RP_CX,RP_CY,'QSPI_SCLK')
-connect('QSPI_SD0',  'RP2040',RP_CX,RP_CY,'QSPI_SD0')
-connect('QSPI_SD1',  'RP2040',RP_CX,RP_CY,'QSPI_SD1')
-connect('QSPI_SD2',  'RP2040',RP_CX,RP_CY,'QSPI_SD2')
-connect('QSPI_SD3',  'RP2040',RP_CX,RP_CY,'QSPI_SD3')
+# QSPI is connected to the internal flash die in RP2354A.
+# Leave external pads unconnected except QSPI_SS, which is exposed as USB_BOOT.
+connect('USB_BOOT', 'RP2354A',RP_CX,RP_CY,'QSPI_SS')
+for qpin in ['QSPI_SCLK','QSPI_SD0','QSPI_SD1','QSPI_SD2','QSPI_SD3']:
+    nc('RP2354A',RP_CX,RP_CY,qpin)
 
 # USB
-connect('USB_DP','RP2040',RP_CX,RP_CY,'USB_DP')
-connect('USB_DM','RP2040',RP_CX,RP_CY,'USB_DM')
+connect('USB_DP','RP2354A',RP_CX,RP_CY,'USB_DP')
+connect('USB_DM','RP2354A',RP_CX,RP_CY,'USB_DM')
 
 # Crystal 12MHz
-connect('RP_XIN', 'RP2040',RP_CX,RP_CY,'XIN')
-connect('RP_XOUT','RP2040',RP_CX,RP_CY,'XOUT')
+connect('RP_XIN', 'RP2354A',RP_CX,RP_CY,'XIN')
+connect('RP_XOUT','RP2354A',RP_CX,RP_CY,'XOUT')
 
 # RUN (reset via button)
-connect('RP_RUN','RP2040',RP_CX,RP_CY,'RUN')
+connect('RP_RUN','RP2354A',RP_CX,RP_CY,'RUN')
 
 # Debug
-connect('SWCLK','RP2040',RP_CX,RP_CY,'SWCLK')
-connect('SWDIO','RP2040',RP_CX,RP_CY,'SWDIO')
-
-# TESTEN → GND
-place_power('GND','RP2040',RP_CX,RP_CY,'TESTEN',gnd=True)
+connect('SWCLK','RP2354A',RP_CX,RP_CY,'SWCLK')
+connect('SWDIO','RP2354A',RP_CX,RP_CY,'SWDIO')
 
 # Power
-place_power('VCC3V3','RP2040',RP_CX,RP_CY,'IOVDD')
-place_power('VCC3V3','RP2040',RP_CX,RP_CY,'IOVDD')
-place_power('VCC3V3','RP2040',RP_CX,RP_CY,'USB_VDD')
-place_power('VCC3V3','RP2040',RP_CX,RP_CY,'ADC_AVDD')
-place_power('VCC3V3','RP2040',RP_CX,RP_CY,'VREG_VIN')
-place_power('GND','RP2040',RP_CX,RP_CY,'GND',gnd=True)
-place_power('GND','RP2040',RP_CX,RP_CY,'GND',gnd=True)
-place_power('GND','RP2040',RP_CX,RP_CY,'GND',gnd=True)
-# VREG_VOUT: connect 100nF cap to GND
-connect('VREG_VOUT','RP2040',RP_CX,RP_CY,'VREG_VOUT')
-VREG_X, VREG_Y = RP_CX+5, RP_CY+38
-components.append(('C','C1','100nF','Capacitor_SMD:C_0402_1005Metric',VREG_X,VREG_Y,'C14663'))
-labels.append(('VREG_VOUT',VREG_X,VREG_Y-3.048))
-pwrs.append(('GND',VREG_X,VREG_Y+3.048,270))
+for p in ['IOVDD1','IOVDD2','IOVDD3','IOVDD4','IOVDD5','IOVDD6',
+          'USB_OTP_VDD','QSPI_IOVDD','ADC_AVDD','VREG_VIN']:
+    place_power('VCC3V3','RP2354A',RP_CX,RP_CY,p)
+place_power('GND','RP2354A',RP_CX,RP_CY,'GND',gnd=True)
+place_power('GND','RP2354A',RP_CX,RP_CY,'VREG_PGND',gnd=True)
 
-# RP2040 decoupling caps
-for i in range(4):
+# RP2350 core regulator: internal buck VREG_LX -> 3.3uH -> 1.1V core rail.
+connect('VREG_LX','RP2354A',RP_CX,RP_CY,'VREG_LX')
+connect('VREG_1V1','RP2354A',RP_CX,RP_CY,'VREG_FB')
+for p in ['DVDD1','DVDD2','DVDD3']:
+    connect('VREG_1V1','RP2354A',RP_CX,RP_CY,p)
+
+L2_X, L2_Y = RP_CX+25, RP_CY+35
+components.append(('L','L2','3.3uH','Inductor_SMD:L_0805_2012Metric',L2_X,L2_Y,'C25923'))
+labels.append(('VREG_LX', L2_X, L2_Y - 4.572))
+labels.append(('VREG_1V1', L2_X, L2_Y + 4.572))
+
+RVREG_X, RVREG_Y = RP_CX+40, RP_CY+25
+components.append(('R','R23','33','Resistor_SMD:R_0402_1005Metric',RVREG_X,RVREG_Y,'C25105'))
+labels.append(('VCC3V3', RVREG_X, RVREG_Y - 4.318))
+labels.append(('VREG_AVDD', RVREG_X, RVREG_Y + 4.318))
+connect('VREG_AVDD','RP2354A',RP_CX,RP_CY,'VREG_AVDD')
+
+for ref,val,net,cx,cy,lcsc in [
+    ('C7','4.7uF','VREG_1V1',RP_CX+35,RP_CY+38,'C19712'),
+    ('C8','100nF','VREG_AVDD',RP_CX+46,RP_CY+35,'C14663'),
+    ('C9','4.7uF','VREG_1V1',RP_CX+42,RP_CY+38,'C19712'),
+    ('C10','4.7uF','VREG_1V1',RP_CX+49,RP_CY+38,'C19712'),
+]:
+    components.append(('C',ref,val,'Capacitor_SMD:C_0402_1005Metric',cx,cy,lcsc))
+    labels.append((net,cx,cy-3.048))
+    pwrs.append(('GND',cx,cy+3.048,270))
+
+# RP2354A 3.3V decoupling caps
+for i in range(7):
     decap('VCC3V3', RP_CX-30+i*6, RP_CY-38, '100nF','C14663')
-decap('VCC3V3', RP_CX-10, RP_CY-38, '1uF','C52923')
+decap('VCC3V3', RP_CX+15, RP_CY-38, '4.7uF','C19712')
 
 # 12MHz Crystal
 Y1_X, Y1_Y = RP_CX-45, RP_CY-50
@@ -738,20 +750,6 @@ components.append(('C','C3','12pF','Capacitor_SMD:C_0402_1005Metric',LC2_X,LC2_Y
 labels.append(('RP_XOUT', LC2_X, LC2_Y-3.048))
 pwrs.append(('GND',LC2_X,LC2_Y+3.048,270))
 
-# W25Q16JV Flash
-FL_X, FL_Y = RP_CX-40, RP_CY-20
-components.append(('W25Q16JV','U2','W25Q16JVSSIQ',
-    'Package_SO:SOIC-8_3.9x4.9mm_P1.27mm',FL_X,FL_Y,'C97521'))
-connect('QSPI_SS_N', 'W25Q16JV',FL_X,FL_Y,'/CS')
-connect('QSPI_SD1',  'W25Q16JV',FL_X,FL_Y,'DO')
-place_power('VCC3V3','W25Q16JV',FL_X,FL_Y,'/WP')   # /WP → VCC3V3 (write protect disabled)
-place_power('GND',   'W25Q16JV',FL_X,FL_Y,'GND',gnd=True)
-connect('QSPI_SD0',  'W25Q16JV',FL_X,FL_Y,'DI')
-connect('QSPI_SCLK', 'W25Q16JV',FL_X,FL_Y,'CLK')
-place_power('VCC3V3','W25Q16JV',FL_X,FL_Y,'/HOLD') # /HOLD → VCC3V3 (hold disabled)
-place_power('VCC3V3','W25Q16JV',FL_X,FL_Y,'VCC')
-decap('VCC3V3',FL_X+8,FL_Y,'100nF','C14663')
-
 # RUN button + pullup
 RUNPU_X, RUNPU_Y = RP_CX-60, RP_CY+15
 components.append(('R','R8','10k','Resistor_SMD:R_0402_1005Metric',RUNPU_X,RUNPU_Y,'C25744'))
@@ -759,11 +757,25 @@ labels.append(('VCC3V3',RUNPU_X,RUNPU_Y-4.318))
 labels.append(('RP_RUN', RUNPU_X,RUNPU_Y+4.318))
 SW_RST_X, SW_RST_Y = RP_CX-70, RP_CY+15
 components.append(('SW_Push','SW3','RESET',
-    'Button_Switch_SMD:SW_Push_1P1T_NO_Vertical_Straight_PadInPin_CK_KSC741J',SW_RST_X,SW_RST_Y,'C318884'))
+    'Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC7xxJ',SW_RST_X,SW_RST_Y,'C318884'))
 labels.append(('RP_RUN',SW_RST_X+all_endpoints['SW_Push']['A'][0],
                          SW_RST_Y+all_endpoints['SW_Push']['A'][1]))
 pwrs.append(('GND',SW_RST_X+all_endpoints['SW_Push']['B'][0],
                     SW_RST_Y+all_endpoints['SW_Push']['B'][1],270))
+
+# BOOTSEL button: pull QSPI_SS low during reset to enter USB/UART boot mode.
+RBOOT_X, RBOOT_Y = RP_CX-85, RP_CY+5
+components.append(('R','R24','1k','Resistor_SMD:R_0402_1005Metric',RBOOT_X,RBOOT_Y,'C11702'))
+labels.append(('USB_BOOT',RBOOT_X,RBOOT_Y-4.318))
+labels.append(('USB_BOOT_SW',RBOOT_X,RBOOT_Y+4.318))
+
+SW_BOOT_X, SW_BOOT_Y = RP_CX-85, RP_CY+15
+components.append(('SW_Push','SW4','BOOTSEL',
+    'Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC7xxJ',SW_BOOT_X,SW_BOOT_Y,'C318884'))
+labels.append(('USB_BOOT_SW',SW_BOOT_X+all_endpoints['SW_Push']['A'][0],
+                              SW_BOOT_Y+all_endpoints['SW_Push']['A'][1]))
+pwrs.append(('GND',SW_BOOT_X+all_endpoints['SW_Push']['B'][0],
+                    SW_BOOT_Y+all_endpoints['SW_Push']['B'][1],270))
 
 # USB series resistors (27Ω)
 RUSB1_X, RUSB1_Y = USBC_X+15, USBC_Y+10
@@ -775,8 +787,8 @@ components.append(('R','R10','27','Resistor_SMD:R_0402_1005Metric',RUSB2_X,RUSB2
 labels.append(('USB_DM', RUSB2_X,RUSB2_Y-4.318))
 labels.append(('USB_DM_MCU',RUSB2_X,RUSB2_Y+4.318))
 # Connect MCU USB to MCU pins via labels
-x,y=pin_ep('RP2040',RP_CX,RP_CY,'USB_DP'); labels.append(('USB_DP_MCU',x,y))
-x,y=pin_ep('RP2040',RP_CX,RP_CY,'USB_DM'); labels.append(('USB_DM_MCU',x,y))
+x,y=pin_ep('RP2354A',RP_CX,RP_CY,'USB_DP'); labels.append(('USB_DP_MCU',x,y))
+x,y=pin_ep('RP2354A',RP_CX,RP_CY,'USB_DM'); labels.append(('USB_DM_MCU',x,y))
 
 # ─── W5500 ETHERNET ──────────────────────────────────────────────────────────
 W5_X, W5_Y = 255, 130
@@ -886,7 +898,7 @@ labels.append(('W5500_RST',RRSTP_X,RRSTP_Y+4.318))
 # ─── HR911105A RJ45 ──────────────────────────────────────────────────────────
 RJ_X, RJ_Y = 310, 130
 components.append(('HR911105A','J2','HR911105A',
-    'Connector_RJ:RJ45_Amphenol_54602-x08_Horizontal',RJ_X,RJ_Y,'C12074'))
+    'Connector_RJ:RJ45_Hanrun_HR911105A_Horizontal',RJ_X,RJ_Y,'C12074'))
 # Magnetics connections (the HR911105A has integrated magnetics)
 # TD+/TD- → W5500 TXP/TXN via transformer center-taps at 3V3/2
 # The HR911105A has pins: MDI+/-, MDO+/- (to MCU side) and TD+/-,RD+/- (to RJ45 pins)
@@ -923,7 +935,7 @@ LS_X, LS_Y = 120, 175
 components.append(('SN74AHCT125','U4','SN74AHCT125',
     'Package_SO:SOIC-14_3.9x8.7mm_P1.27mm',LS_X,LS_Y,'C7484'))
 
-# 4 buffers: OE tied low (enabled), inputs from RP2040, outputs to LED connectors
+# 4 buffers: OE tied low (enabled), inputs from RP2354A, outputs to LED connectors
 place_power('GND','SN74AHCT125',LS_X,LS_Y,'/OE_A',gnd=True)
 place_power('GND','SN74AHCT125',LS_X,LS_Y,'/OE_B',gnd=True)
 place_power('GND','SN74AHCT125',LS_X,LS_Y,'/OE_C',gnd=True)
@@ -977,7 +989,7 @@ labels.append(('I2C_SDA',RIIC2_X,RIIC2_Y+4.318))
 for i,(bx,by) in enumerate([(30,180),(45,180)]):
     ref = f'SW{i+1}'
     components.append(('SW_Push',ref,f'BTN{i+1}',
-        'Button_Switch_SMD:SW_Push_1P1T_NO_Vertical_Straight_PadInPin_CK_KSC741J',bx,by,'C318884'))
+        'Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC7xxJ',bx,by,'C318884'))
     x,y = pin_ep('SW_Push',bx,by,'A'); labels.append((f'BTN{i+1}',x,y))
     x,y = pin_ep('SW_Push',bx,by,'B'); pwrs.append(('GND',x,y,270))
     # Pullup resistor
@@ -998,7 +1010,7 @@ x,y = pin_ep('Conn_1x03',SWD_X,SWD_Y,'Pin3'); pwrs.append(('GND',x,y,270))
 
 # ─── POWER FLAG (required by KiCad ERC) ──────────────────────────────────────
 # Power flags tell ERC that power rails are driven
-for net,fx,fy in [('VCC3V3',10,10),('VCC5V',20,10),('GND',30,10),('VBAT',40,10),('VUSB',50,10)]:
+for net,fx,fy in [('VCC3V3',10,10),('VCC5V',20,10),('GND',30,10),('VBAT',40,10),('VUSB',50,10),('VREG_1V1',60,10)]:
     pwrs.append((f'PWR_FLAG',fx,fy,0))
     pwrs.append((net,fx,fy+5,0))
 
@@ -1014,7 +1026,7 @@ lines.append(f'    (title "ArtNet LED Controller")')
 lines.append(f'    (date "2024-01-01")')
 lines.append(f'    (rev "1.0")')
 lines.append(f'    (company "Open Source")')
-lines.append(f'    (comment 1 "RP2040 + W5500 + 4x WS2812 outputs + LiPo charging")')
+lines.append(f'    (comment 1 "RP2354A + W5500 + 4x WS2812 outputs + LiPo charging")')
 lines.append(f'  )')
 lines.append('')
 lines.append('  (lib_symbols')

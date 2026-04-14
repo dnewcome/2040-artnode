@@ -1,6 +1,6 @@
 # ArtNet LED Controller
 
-RP2040-based ArtNet node with 4× WS2812/SK6812 serial outputs, W5500 Ethernet, USB-C LiPo charging, and SSD1306 OLED display header.
+RP2354A-based ArtNet node with 4× WS2812/SK6812 serial outputs, W5500 Ethernet, USB-C LiPo charging, and SSD1306 OLED display header.
 
 ---
 
@@ -8,13 +8,13 @@ RP2040-based ArtNet node with 4× WS2812/SK6812 serial outputs, W5500 Ethernet, 
 
 | Parameter | Value |
 |---|---|
-| MCU | Raspberry Pi RP2040 (dual-core Cortex-M0+, 133MHz) |
+| MCU | Raspberry Pi RP2354A (dual-core Cortex-M33 / Hazard3 RISC-V, 150MHz) |
 | Network | WIZnet W5500 hardwired TCP/IP + ArtNet (Ethernet) |
 | LED outputs | 4× single-wire serial (WS2812B / SK6812 / NeoPixel compatible) |
 | Max pixels | 1024 (256/universe × 4 universes at 30fps) |
-| Flash | W25Q16JVSSIQ 2MB QSPI NOR |
+| Flash | 2MB flash-in-package inside RP2354A |
 | OLED | I²C header for SSD1306 128×64 |
-| Buttons | 2× user + 1× reset |
+| Buttons | 2× user + 1× reset + 1× BOOTSEL |
 | Charging | TP4056 @ 500mA, USB-C input (5V/3A CC resistors) |
 | Battery | Single-cell Li-Ion/LiPo via JST-PH 2-pin |
 | 5V rail | MT3608 boost converter (VBAT → 5.1V) |
@@ -50,7 +50,7 @@ Li-Ion Battery ──┘                                       │
 
 ---
 
-## Pinout — RP2040
+## Pinout — RP2354A
 
 | GPIO | Function | Notes |
 |---|---|---|
@@ -68,7 +68,8 @@ Li-Ion Battery ──┘                                       │
 | GPIO21 | W5500_RST | Active low reset |
 | GPIO22 | BTN1 | Active low, 10k pullup |
 | GPIO23 | BTN2 | Active low, 10k pullup |
-| QSPI | Flash | W25Q16JVSSIQ boot flash |
+| QSPI_SS | USB_BOOT | SW4 BOOTSEL, hold low during reset |
+| QSPI | Internal flash | Integrated 2MB flash-in-package |
 | USB | USB | Native USB (programming / serial) |
 | SWCLK/SWDIO | SWD | Debug header J10 |
 
@@ -146,7 +147,7 @@ Or use the **FreeRouting** plugin:
 - Route Ethernet TX+/TX- and RX+/RX- as differential pairs (0.2mm/0.2mm gap)
 - Keep 25MHz crystal traces (Y2) short and shielded with GND vias
 - Keep 12MHz crystal traces (Y1) short and shielded with GND vias
-- RP2040 decoupling caps must be within 1mm of IOVDD/USB_VDD/ADC_AVDD pins
+- RP2354A decoupling and internal regulator parts must follow Raspberry Pi RP2350 layout guidance
 - TP4056 PROG resistor (R3) must be within 10mm of the PROG pin
 
 ---
@@ -177,26 +178,26 @@ Upload `jlcpcb-bom.csv` and the Pick & Place file (generated from KiCad):
 
 The BOM uses LCSC part numbers. All extended parts incur a one-time $3 setup fee per unique part number (at time of writing). The design uses:
 
-- **12 Basic parts** (no extended fee)
-- **4 Extended parts**: W25Q16JVSSIQ (C97521), W5500 (C32646), USB4125-GF-A (C165948), HR911105A (C12074)
+- **Basic parts**: passives, connectors, charger, regulator, switches, crystals, level shifter
+- **Extended parts**: RP2354A (C41378174), W5500 (C32646), USB4125-GF-A (C165948), HR911105A (C12074)
 
-Total extended fee: ~$12 one-time per order.
+The RP2354A uses the QFN-60 7mm × 7mm footprint.
 
 ---
 
 ## Firmware
 
-The RP2040 targets the [WLED](https://github.com/Aircoookie/WLED) port for RP2040, or custom firmware using:
+The RP2354A targets RP2350-compatible firmware using:
 
 - [pico-sdk](https://github.com/raspberrypi/pico-sdk)
-- [Ethernet library for RP2040 + W5500](https://github.com/earlephilhower/arduino-pico) (Arduino-Pico)
-- [MicroPython + W5500 nic driver](https://micropython.org)
+- [Ethernet library for Raspberry Pi Pico-class boards + W5500](https://github.com/earlephilhower/arduino-pico) when the selected release supports RP2350
+- [MicroPython + W5500 nic driver](https://micropython.org) using an RP2350 build
 
 ArtNet reception via W5500: UDP port 6454, standard ArtDMX packets.
 
-LED protocol via PIO: RP2040 PIO0 state machines on GPIO0–3 for parallel WS2812B output (800kHz, single-wire).
+LED protocol via PIO: RP2354A PIO state machines on GPIO0–3 for parallel WS2812B output (800kHz, single-wire).
 
-Programming: Connect USB-C → RP2040 appears as UF2 drive (hold BOOTSEL = RUN button + power cycle). SWD debug via J10.
+Programming: hold SW4 BOOTSEL while pressing/releasing SW3 RESET. The RP2354A appears as a USB boot device. SWD debug via J10.
 
 ---
 
@@ -215,9 +216,9 @@ python3 gen_bom.py       # jlcpcb-bom.csv
 
 ## Design Notes
 
-- **QSPI SD2/SD3**: Connected to /WP and /HOLD on W25Q16JV (tied high = normal operation). RP2040 QSPI uses all 4 data lines in quad-SPI mode for fast flash reads.
+- **Integrated flash**: RP2354A contains the 2MB boot flash in-package, so U2/W25Q16JV and its QSPI routing were removed.
+- **QSPI_SS / USB_BOOT**: Connected to SW4 BOOTSEL through R24 (1k). The remaining QSPI pads are left unconnected externally because they are shared with the internal flash die.
 - **W5500 VDD pin**: The W5500 generates its own 1.2V core from AVDD internally. The VDD pin is an output — connect only a 100nF bypass cap (C4).
-- **VREG_VOUT**: RP2040 internal 1.1V regulator output — connect only C1 (100nF) and no load.
-- **TESTEN**: Must be tied to GND for normal operation.
+- **RP2354A core regulator**: Uses L2 (3.3µH) and C7/C9/C10 on the internal 1.1V rail, with R23/C8 filtering VREG_AVDD.
 - **TP4056 TE pin**: Tied high (to VCC) to disable the safety timer — suitable when charging from USB-C which provides reliable 5V.
 - **MT3608 current limit**: The 22µH inductor (L1) supports up to 2A peak. At 3.7V→5.1V the duty cycle is ~27%, continuous current ~600mA safely.

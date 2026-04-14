@@ -1,6 +1,6 @@
 # 2040-ArtNode
 
-Open-source ArtNet LED controller built around the Raspberry Pi RP2040. Drives four independent addressable LED universes (WS2812B / SK6812 / NeoPixel) over Ethernet using the ArtNet protocol, with integrated USB-C LiPo charging and an OLED display header.
+Open-source ArtNet LED controller built around the Raspberry Pi RP2354A. Drives four independent addressable LED universes (WS2812B / SK6812 / NeoPixel) over Ethernet using the ArtNet protocol, with integrated USB-C LiPo charging and an OLED display header.
 
 Designed for JLCPCB turnkey assembly — all parts are from the JLCPCB/LCSC catalog with no custom stocking required.
 
@@ -8,7 +8,7 @@ Designed for JLCPCB turnkey assembly — all parts are from the JLCPCB/LCSC cata
 
 ## Features
 
-- **RP2040** dual-core ARM Cortex-M0+ @ 133MHz
+- **RP2354A** dual-core Cortex-M33 / Hazard3 RISC-V @ 150MHz with 2MB flash-in-package
 - **W5500** hardwired Ethernet — receives ArtNet (UDP port 6454)
 - **4× serial LED outputs** — WS2812B / SK6812 via PIO state machines
 - **1024 pixels** total capacity (256 pixels × 4 universes at 30fps)
@@ -18,7 +18,7 @@ Designed for JLCPCB turnkey assembly — all parts are from the JLCPCB/LCSC cata
 - **MT3608** boost converter — battery → 5.1V system rail
 - **AMS1117-3.3** LDO — 5V → 3.3V for all digital logic
 - **SSD1306 OLED** I²C header (128×64, 0.96")
-- **2× user buttons** + **1× reset**
+- **2× user buttons** + **1× reset** + **1× BOOTSEL**
 - **SWD debug header**
 - **100mm × 70mm**, 2-layer FR4, ENIG finish
 
@@ -59,8 +59,8 @@ USB-C (5V/3A) ────── TP4056 (500mA) ──── Li-Ion/LiPo cell
                                                 │
                                            5V system rail ──── AMS1117-3.3 ──── 3.3V rail
                                                 │                                    │
-                                        LED connector VCC                  RP2040, W5500,
-                                        (short strips only)                 Flash, OLED
+                                        LED connector VCC                  RP2354A, W5500,
+                                        (short strips only)                 OLED
 ```
 
 LED pixel power (up to 61A at full brightness for 1024×WS2812B) must be supplied externally, directly to your LED strips. The board provides only the **control signal** and a pass-through 5V pin on each output connector for short test strips.
@@ -71,8 +71,7 @@ LED pixel power (up to 61A at full brightness for 1024×WS2812B) must be supplie
 
 | Ref | Part | LCSC | Function |
 |-----|------|------|----------|
-| U1 | RP2040 | C2040 | MCU |
-| U2 | W25Q16JVSSIQ | C97521 | 2MB boot flash (QSPI) |
+| U1 | RP2354A | C41378174 | MCU with 2MB flash-in-package |
 | U3 | W5500 | C32646 | Ethernet TCP/IP + ArtNet |
 | U4 | SN74AHCT125 | C7484 | 3.3V→5V level shifter (4ch) |
 | U5 | TP4056 | C16581 | LiPo charger |
@@ -81,12 +80,13 @@ LED pixel power (up to 61A at full brightness for 1024×WS2812B) must be supplie
 | J1 | USB4125-GF-A | C165948 | USB-C receptacle |
 | J2 | HR911105A | C12074 | RJ45 w/ integrated magnetics |
 | J3 | B2B-PH-K | C131337 | JST-PH 2-pin battery |
-| Y1 | 12MHz crystal | C9002 | RP2040 XOSC |
+| Y1 | 12MHz crystal | C9002 | RP2354A XOSC |
+| L2 | 3.3µH inductor | C25923 | RP2354A internal buck regulator |
 | Y2 | 25MHz crystal | C13738 | W5500 PHY clock |
 
 ---
 
-## RP2040 Pin Assignment
+## RP2354A Pin Assignment
 
 | GPIO | Net | Function |
 |------|-----|----------|
@@ -101,7 +101,8 @@ LED pixel power (up to 61A at full brightness for 1024×WS2812B) must be supplie
 | 21 | W5500\_RST | Ethernet reset |
 | 22 | BTN1 | User button 1 |
 | 23 | BTN2 | User button 2 |
-| QSPI | — | W25Q16JV boot flash |
+| QSPI_SS | USB_BOOT | Hold low during reset for BOOTSEL USB/UART boot |
+| QSPI | — | Internal 2MB flash-in-package |
 | USB | — | Native USB (UF2 / CDC) |
 | SWD | — | Debug via J10 |
 
@@ -117,7 +118,7 @@ The PCB file has all components placed. To finish:
    - USB D+/D−: differential pair, matched length, 27Ω series resistors near J1
    - Ethernet TX/RX pairs: differential, 0.2mm/0.2mm gap
    - Crystal traces (Y1, Y2): short, GND-shielded
-   - RP2040 bypass caps: within 1mm of power pins
+   - RP2354A bypass caps and internal regulator parts: within the Raspberry Pi layout guidance
 4. Fill copper zones (GND on both layers already defined)
 5. Run DRC — JLCPCB minimums: 0.2mm track, 0.2mm clearance, 0.3mm via drill
 
@@ -134,21 +135,21 @@ The PCB file has all components placed. To finish:
 
 Upload gerbers + drill file. For SMT assembly, upload `jlcpcb-bom.csv` and the pick-and-place file (**File → Fabrication Outputs → Component Placement**).
 
-**Extended parts** (one-time $3 setup fee each): W25Q16JVSSIQ, W5500, USB4125-GF-A, HR911105A — ~$12 total. All other parts are JLCPCB Basic.
+**Extended parts** (one-time setup fee each): RP2354A (C41378174), W5500, USB4125-GF-A, HR911105A.
 
 ---
 
 ## Firmware
 
-Any RP2040 framework works. Recommended starting points:
+Use an RP2350-compatible firmware stack. Recommended starting points:
 
-- **Arduino-Pico** + Ethernet library (W5500 built-in): easiest ArtNet path
-- **pico-sdk** + LWIP: full control, lower overhead
-- **MicroPython**: W5500 NIC driver included since MicroPython 1.20
+- **pico-sdk** for RP2350 + W5500 driver: full control, lower overhead
+- **Arduino-Pico** when RP2350 support in your selected release covers the peripherals you need
+- **MicroPython** RP2350 builds plus W5500 NIC support
 
 ArtNet reception: listen on UDP port 6454, parse `ArtDMX` packets, route universes 0–3 to GPIO 0–3 via PIO WS2812 driver.
 
-Programming: hold BTN1 (BOOTSEL) while powering on → RP2040 appears as UF2 mass-storage drive. Drag `.uf2` file to flash. SWD debug via J10.
+Programming: pull `USB_BOOT` / `QSPI_SS` low during reset to enter BOOTSEL, then the RP2354A appears as a USB boot device. SWD debug via J10.
 
 ---
 
