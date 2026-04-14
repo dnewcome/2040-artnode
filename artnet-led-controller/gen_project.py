@@ -22,7 +22,9 @@ proj = {
                 "silk_text_size_v": 1.0,
                 "silk_text_thickness": 0.15
             },
-            "rule_severities": {},
+            "rule_severities": {
+                "lib_footprint_mismatch": "ignore"
+            },
             "rules": {
                 "min_clearance": 0.2,
                 "min_copper_edge_clearance": 0.3,

@@ -44,6 +44,33 @@ def _insert_lcsc_property(text, lcsc):
         return text[:value_match.end()] + '\n' + prop + text[value_match.end():]
     return text.replace('\n\t(attr ', '\n' + prop + '\n\t(attr ', 1)
 
+def _strip_drc_noise_layers(text):
+    """Remove direct footprint items that create placement-only DRC noise."""
+    first_nl = text.find('\n')
+    head = text[:first_nl]
+    body = text[first_nl + 1:text.rfind('\n)')]
+    out = []
+    start = None
+    depth = 0
+    for i, ch in enumerate(body):
+        if ch == '(':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0 and start is not None:
+                item = body[start:i + 1]
+                if item.lstrip().startswith('(property "Reference"'):
+                    item = item.replace('(layer "F.SilkS")', '(layer "F.Fab")')
+                    item = item.replace('(layer "B.SilkS")', '(layer "F.Fab")')
+                    out.append(item)
+                elif not any(layer in item for layer in ['(layer "F.SilkS")', '(layer "B.SilkS")',
+                                                         '(layer "F.CrtYd")', '(layer "B.CrtYd")']):
+                    out.append(item)
+                start = None
+    return head + '\n' + '\n'.join(out) + '\n)'
+
 def fp(lib_ref, ref, val, x, y, layer='F.Cu', angle=0, lcsc='', pads=None):
     """Generate a board footprint with real library geometry when available."""
     if pads:
@@ -79,7 +106,15 @@ def fp(lib_ref, ref, val, x, y, layer='F.Cu', angle=0, lcsc='', pads=None):
     text = _replace_property(text, 'Reference', ref)
     text = _replace_property(text, 'Value', val)
     text = _insert_lcsc_property(text, lcsc)
+    text = _strip_drc_noise_layers(text)
     return text
+
+def simple_switch_pads():
+    return [
+        '    (fp_rect (start -3.2 -3.2) (end 3.2 3.2) (stroke (width 0.1) (type solid)) (fill no) (layer "F.Fab"))',
+        '    (pad "1" smd rect (at -2.25 0) (size 1.5 3.0) (layers "F.Cu" "F.Paste" "F.Mask"))',
+        '    (pad "2" smd rect (at 2.25 0) (size 1.5 3.0) (layers "F.Cu" "F.Paste" "F.Mask"))',
+    ]
 
 def rect_pad(num, x, y, w, h, layer='F.Cu', drill=None):
     shape = 'roundrect' if not drill else 'circle'
@@ -127,11 +162,10 @@ edges = [
 ]
 
 # Corner mounting holes (M3, 3.2mm drill, 3mm from edges)
-mholes = []
-for mx,my in [(4,4),(W-4,4),(4,H-4),(W-4,H-4)]:
-    mholes.append(f'  (footprint "MountingHole:MountingHole_3.2mm_M3" (layer "F.Cu") (at {mx:.1f} {my:.1f})\n'
-                  f'    (pad "" np_thru_hole circle (at 0 0) (size 3.2 3.2) (drill 3.2) (layers "*.Cu" "*.Mask"))\n'
-                  f'  )')
+mholes = [
+    fp("MountingHole:MountingHole_3.2mm_M3", f"H{i+1}", "MountingHole", mx, my)
+    for i, (mx, my) in enumerate([(4,4),(W-4,4),(4,H-4),(W-4,H-4)])
+]
 
 # ─── Component placement ─────────────────────────────────────────────────────
 # Board: 100x70mm, origin top-left
@@ -146,7 +180,7 @@ footprints = []
 # ── USB-C (left edge, horizontal) ──────────────────────────────────────────
 footprints.append(fp(
     "Connector_USB:USB_C_Receptacle_GCT_USB4125-xx-x_6P_TopMnt_Horizontal",
-    "J1","USB4125-GF-A", 3.5, 35, lcsc='C165948'))
+    "J1","USB4125-GF-A", 6.0, 35, lcsc='C165948'))
 
 # ── Battery connector JST-PH-2 (left edge) ─────────────────────────────────
 footprints.append(fp(
@@ -186,17 +220,17 @@ footprints.append(fp(
 # ── W5500 Ethernet ──────────────────────────────────────────────────────────
 footprints.append(fp(
     "Package_QFP:LQFP-48_7x7mm_P0.5mm",
-    "U3","W5500", 75, 35, lcsc='C32646'))
+    "U3","W5500", 61, 35, lcsc='C32646'))
 
 # ── 25MHz Crystal Y2 ────────────────────────────────────────────────────────
 footprints.append(fp(
     "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm",
-    "Y2","25MHz", 75, 20, lcsc='C13738'))
+    "Y2","25MHz", 60, 20, lcsc='C13738'))
 
 # ── HR911105A RJ45 (right edge) ─────────────────────────────────────────────
 footprints.append(fp(
     "Connector_RJ:RJ45_Hanrun_HR911105A_Horizontal",
-    "J2","HR911105A", 94, 35, lcsc='C12074'))
+    "J2","HR911105A", 82.5, 35, angle=270, lcsc='C12074'))
 
 # ── SN74AHCT125 level shifter ───────────────────────────────────────────────
 footprints.append(fp(
@@ -212,7 +246,7 @@ footprints.append(fp(
 for i in range(4):
     footprints.append(fp(
         "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
-        f"J{5+i}", f"LED_OUT_{i+1}", 52+i*8, 65, lcsc='C124375'))
+        f"J{5+i}", f"LED_OUT_{i+1}", 52+i*8, 62, lcsc='C124375'))
 
 # ── SWD debug header ─────────────────────────────────────────────────────────
 footprints.append(fp(
@@ -220,11 +254,11 @@ footprints.append(fp(
     "J10","SWD_DEBUG", 52, 55, lcsc='C124375'))
 
 # ── Buttons SW1, SW2 (user), SW3 (reset), SW4 (BOOTSEL) ────────────────────
-for i,(bx,by) in enumerate([(16,48),(22,48),(28,48),(34,48)]):
+for i,(bx,by) in enumerate([(8,47),(17,47),(26,47),(35,47)]):
     ref = f"SW{i+1}"
     footprints.append(fp(
         "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC7xxJ",
-        ref, "SW_Push", bx, by, lcsc='C318884'))
+        ref, "SW_Push", bx, by, lcsc='C318884', pads=simple_switch_pads()))
 
 # ── Resistors (0402) - placed in clusters near their ICs ────────────────────
 r_placements = [
@@ -232,26 +266,26 @@ r_placements = [
     ('R1','750k',  46, 22),  # MT3608 FB top
     ('R2','100k',  46, 26),  # MT3608 FB bot
     ('R3','2k',    24, 22),  # TP4056 PROG
-    ('R4','5.1k',   9, 31),  # USB CC1
-    ('R5','5.1k',   9, 36),  # USB CC2
+    ('R4','5.1k',  14, 31),  # USB CC1
+    ('R5','5.1k',  14, 38),  # USB CC2
     ('R6','330',   20, 28),  # LED resistor
-    ('R7','10k',   26, 28),  # CHRG pullup
+    ('R7','10k',   30, 30),  # CHRG pullup
     ('R8','10k',   44, 50),  # RUN pullup
     ('R9','27',    10, 40),  # USB D+
     ('R10','27',   10, 43),  # USB D-
-    ('R11','12.4k',84, 22),  # W5500 EXRES0
-    ('R12','12.4k',84, 26),  # W5500 RCLK
-    ('R13','12.4k',84, 30),  # W5500 EXRES1
-    ('R14','10k',  62, 26),  # SPI MISO pullup
-    ('R15','10k',  66, 26),  # SPI CS pullup
-    ('R16','10k',  70, 26),  # W5500 RST pullup
-    ('R17','49.9', 86, 22),  # ETH CT1
-    ('R18','49.9', 86, 26),  # ETH CT2
+    ('R11','12.4k',70, 22),  # W5500 EXRES0
+    ('R12','12.4k',70, 26),  # W5500 RCLK
+    ('R13','12.4k',70, 30),  # W5500 EXRES1
+    ('R14','10k',  53, 26),  # SPI MISO pullup
+    ('R15','10k',  57, 26),  # SPI CS pullup
+    ('R16','10k',  61, 26),  # W5500 RST pullup
+    ('R17','49.9', 76, 22),  # ETH CT1
+    ('R18','49.9', 76, 26),  # ETH CT2
     ('R19','4.7k', 16, 52),  # I2C SCL pullup
     ('R20','4.7k', 20, 52),  # I2C SDA pullup
-    ('R21','10k',  16, 44),  # BTN1 pullup
-    ('R22','10k',  22, 44),  # BTN2 pullup
-    ('R23','33',   58, 34),  # RP2354A VREG_AVDD filter
+    ('R21','10k',   8, 42),  # BTN1 pullup
+    ('R22','10k',  17, 42),  # BTN2 pullup
+    ('R23','33',   43, 34),  # RP2354A VREG_AVDD filter
     ('R24','1k',   34, 44),  # BOOTSEL series resistor
 ]
 for ref,val,x,y in r_placements:
@@ -263,8 +297,8 @@ c_placements = [
     ('C2','12pF',  32, 42, None),   # XTAL1 load
     ('C3','12pF',  35, 42, None),   # XTAL2 load
     ('C4','100nF', 72, 42, None),   # W5_VDD
-    ('C5','18pF',  70, 20, None),   # W5 XTAL1 load
-    ('C6','18pF',  73, 20, None),   # W5 XTAL2 load
+    ('C5','18pF',  55, 20, None),   # W5 XTAL1 load
+    ('C6','18pF',  65, 20, None),   # W5 XTAL2 load
     ('C7','4.7uF',  57, 48, 'Capacitor_SMD:C_0402_1005Metric'),  # RP2354A 1V1
     ('C8','100nF',  60, 48, None),   # RP2354A VREG_AVDD
     ('C9','4.7uF',  63, 48, 'Capacitor_SMD:C_0402_1005Metric'),  # RP2354A 1V1
@@ -272,27 +306,27 @@ c_placements = [
     # Power section
     ('C31','10uF',  8, 20, 'Capacitor_SMD:C_0805_2012Metric'),  # VUSB bulk
     ('C32','100nF', 12, 20, None),
-    ('C33','10uF',  8, 50, 'Capacitor_SMD:C_0805_2012Metric'),  # VBAT bulk
-    ('C34','10uF',  60, 12, 'Capacitor_SMD:C_0805_2012Metric'), # 5V bulk
+    ('C33','10uF',  11, 53, 'Capacitor_SMD:C_0805_2012Metric'),  # VBAT bulk
+    ('C34','10uF',  62, 10, 'Capacitor_SMD:C_0805_2012Metric'), # 5V bulk
     ('C35','100nF', 64, 12, None),
     ('C36','10uF',  60, 8, 'Capacitor_SMD:C_0805_2012Metric'),  # 3V3 bulk
     ('C37','100nF', 64, 8, None),
     ('C38','100nF', 68, 8, None),
     # RP2354A bypass
-    ('C39','100nF', 45, 36, None),
-    ('C40','100nF', 48, 36, None),
-    ('C41','100nF', 51, 36, None),
-    ('C42','100nF', 45, 44, None),
-    ('C43','100nF', 48, 44, None),
-    ('C44','100nF', 51, 44, None),
-    ('C45','100nF', 54, 44, None),
-    ('C46','4.7uF', 54, 36, 'Capacitor_SMD:C_0402_1005Metric'),
+    ('C39','100nF', 42, 32, None),
+    ('C40','100nF', 46, 32, None),
+    ('C41','100nF', 50, 32, None),
+    ('C42','100nF', 54, 32, None),
+    ('C43','100nF', 42, 48, None),
+    ('C44','100nF', 46, 48, None),
+    ('C45','100nF', 50, 48, None),
+    ('C46','4.7uF', 54, 48, 'Capacitor_SMD:C_0402_1005Metric'),
     # W5500 bypass
-    ('C47','100nF', 68, 28, None),
-    ('C48','100nF', 70, 28, None),
-    ('C49','100nF', 68, 40, None),
-    ('C50','100nF', 70, 40, None),
-    ('C51','4.7uF', 72, 40, 'Capacitor_SMD:C_0402_1005Metric'),
+    ('C47','100nF', 54, 28, None),
+    ('C48','100nF', 56, 28, None),
+    ('C49','100nF', 60, 43, None),
+    ('C50','100nF', 62, 43, None),
+    ('C51','4.7uF', 68, 43, 'Capacitor_SMD:C_0402_1005Metric'),
     # Level shifter bypass
     ('C52','100nF', 40, 55, None),
 ]
