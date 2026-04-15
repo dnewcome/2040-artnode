@@ -198,20 +198,60 @@ def circ_pad(num, x, y, d, drill=None):
             f' (at {x:.3f} {y:.3f}) (size {d:.3f} {d:.3f})'
             f' (layers {layers}){dstr})')
 
-def via(x, y, drill=0.4, size=0.8):
+def via(x, y, drill=0.4, size=0.8, net_id=0, net_name=''):
+    net_field = f' (net {net_id})' if net_id else ''
     return (f'  (via (at {x:.3f} {y:.3f}) (size {size:.3f}) (drill {drill:.3f})'
-            f' (layers "F.Cu" "B.Cu") (uuid "{u()}"))')
+            f' (layers "F.Cu" "B.Cu"){net_field} (uuid "{u()}"))')
+
+def power_plane_stitching_vias(pcb_text):
+    """Find every pad on a power net and emit a stitching via at its center.
+    This lets freerouting treat those pads as already-connected through the
+    inner plane, removing them from the routing problem."""
+    import math as _m
+    power_nets = {'GND', 'VCC3V3', 'VCC5V'}
+    vias = []
+    seen = set()
+    # Walk footprint blocks
+    pos = [p.start() for p in re.finditer(r'\(footprint\s+"', pcb_text)]
+    pos.append(len(pcb_text))
+    for a, b in zip(pos[:-1], pos[1:]):
+        blk = pcb_text[a:b]
+        am = re.search(r'\n\s*\(at\s+([\d.\-]+)\s+([\d.\-]+)(?:\s+([\d.\-]+))?', blk)
+        if not am: continue
+        fx, fy = float(am.group(1)), float(am.group(2))
+        fang = float(am.group(3)) if am.group(3) else 0.0
+        ca, sa = _m.cos(_m.radians(fang)), _m.sin(_m.radians(fang))
+        # walk pads
+        ppos = [p.start() for p in re.finditer(r'\(pad\s+"', blk)]
+        ppos.append(len(blk))
+        for pa, pb in zip(ppos[:-1], ppos[1:]):
+            pblk = blk[pa:pb]
+            am2 = re.search(r'\(at\s+([\d.\-]+)\s+([\d.\-]+)', pblk)
+            nm = re.search(r'\(net\s+(\d+)\s+"([^"]*)"\)', pblk)
+            if not (am2 and nm): continue
+            net_id = int(nm.group(1)); net_name = nm.group(2)
+            if net_name not in power_nets: continue
+            px, py = float(am2.group(1)), float(am2.group(2))
+            wx = fx + px*ca - py*sa
+            wy = fy + px*sa + py*ca
+            key = (round(wx, 2), round(wy, 2))
+            if key in seen: continue
+            seen.add(key)
+            vias.append(via(wx, wy, drill=0.3, size=0.6,
+                            net_id=net_id, net_name=net_name))
+    return vias
 
 def track(x1,y1,x2,y2, width=0.25, layer='F.Cu'):
     return (f'  (segment (start {x1:.3f} {y1:.3f}) (end {x2:.3f} {y2:.3f})'
             f' (width {width:.3f}) (layer "{layer}") (uuid "{u()}"))')
 
-def zone(net_name, layer, pts, min_thk=0.25):
+def zone(net_name, layer, pts, min_thk=0.25, priority=0):
     """Copper zone/pour"""
     pt_str = ' '.join(f'(xy {x:.3f} {y:.3f})' for x,y in pts)
     nid = NET_IDS.get(net_name, 0)
+    prio = f'(priority {priority}) ' if priority else ''
     return f'''  (zone (net {nid}) (net_name "{net_name}") (layer "{layer}") (uuid "{u()}")
-    (connect_pads (clearance 0.3))
+    {prio}(connect_pads (clearance 0.3))
     (min_thickness {min_thk:.3f}) (filled_areas_thickness no)
     (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.3))
     (polygon (pts {pt_str}))
@@ -246,84 +286,91 @@ silks = [
 
 footprints = []
 
-# ── USB-C (left edge, horizontal) ──────────────────────────────────────────
+# ══ LEFT POWER COLUMN (x≈3..28) ═════════════════════════════════════════════
+# Flow: USB-C → TP4056 ⇄ JST batt → D1 OR-gate → MT3608 boost → AMS1117 LDO
+
+# USB-C (opening faces left edge)
 footprints.append(fp(
     "Connector_USB:USB_C_Receptacle_GCT_USB4125-xx-x_6P_TopMnt_Horizontal",
-    "J1","USB4125-GF-A", 6.0, 35, lcsc='C165948'))
+    "J1","USB4125-GF-A", 5.0, 14, angle=90, lcsc='C165948'))
 
-# ── Battery connector JST-PH-2 (left edge) ─────────────────────────────────
-footprints.append(fp(
-    "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical",
-    "J3","VBAT JST-PH-2", 3.5, 50, lcsc='C131337'))
-
-# ── TP4056 LiPo charger ─────────────────────────────────────────────────────
+# TP4056 LiPo charger
 footprints.append(fp(
     "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
-    "U5","TP4056", 20, 18, lcsc='C16581'))
+    "U5","TP4056", 18, 14, lcsc='C16581'))
 
-# ── MT3608 Boost converter ──────────────────────────────────────────────────
+# Battery connector JST-PH-2 (cable exit points left off the edge)
+footprints.append(fp(
+    "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical",
+    "J3","VBAT JST-PH-2", 5.0, 28, angle=90, lcsc='C131337'))
+
+# Schottky power-OR diode (VUSB + VBAT → VSYS)
+footprints.append(fp("Diode_SMD:D_SOD-123","D1","SS14", 18, 28, lcsc='C2480'))
+
+# MT3608 boost converter + inductor
 footprints.append(fp(
     "Package_TO_SOT_SMD:SOT-23-6",
-    "U6","MT3608", 33, 18, lcsc='C84817'))
-
-# ── Boost inductor L1 ───────────────────────────────────────────────────────
+    "U6","MT3608", 12, 40, lcsc='C84817'))
 footprints.append(fp(
     "Inductor_SMD:L_0805_2012Metric",
-    "L1","22uH", 42, 18, lcsc='C1046'))
+    "L1","22uH", 20, 40, lcsc='C1046'))
 
-# ── AMS1117-3.3 ─────────────────────────────────────────────────────────────
+# AMS1117-3.3 LDO (5V → 3V3)
 footprints.append(fp(
     "Package_TO_SOT_SMD:SOT-223-3_TabPin2",
-    "U7","AMS1117-3.3", 55, 15, lcsc='C6186'))
+    "U7","AMS1117-3.3", 18, 50, lcsc='C6186'))
 
-# ── 12MHz Crystal Y1 ────────────────────────────────────────────────────────
-footprints.append(fp(
-    "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm",
-    "Y1","12MHz", 38, 42, lcsc='C9002'))
-
-# ── RP2354A (center) ────────────────────────────────────────────────────────
+# ══ CENTER MCU CLUSTER (x≈35..55) ═══════════════════════════════════════════
+# RP2354A (center)
 footprints.append(fp(
     "Package_DFN_QFN:QFN-60-1EP_7x7mm_P0.4mm_EP3.4x3.4mm",
-    "U1","RP2354A", 52, 40, lcsc='C41378174'))
+    "U1","RP2354A", 46, 32, lcsc='C41378174'))
 
-# ── W5500 Ethernet ──────────────────────────────────────────────────────────
-footprints.append(fp(
-    "Package_QFP:LQFP-48_7x7mm_P0.5mm",
-    "U3","W5500", 61, 35, lcsc='C32646'))
-
-# ── 25MHz Crystal Y2 ────────────────────────────────────────────────────────
+# 12MHz crystal — immediately below U1 XTAL pins
 footprints.append(fp(
     "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm",
-    "Y2","25MHz", 60, 20, lcsc='C13738'))
+    "Y1","12MHz", 46, 42, lcsc='C9002'))
 
-# ── HR911105A RJ45 (right edge) ─────────────────────────────────────────────
+# ══ RIGHT NETWORK CLUSTER (x≈62..92) ═════════════════════════════════════════
+# W5500 Ethernet MAC/PHY
+footprints.append(fp(
+    "Package_QFP:LQFP-48_7x7mm_P0.5mm",
+    "U3","W5500", 68, 32, lcsc='C32646'))
+
+# 25MHz crystal — immediately below W5500
+footprints.append(fp(
+    "Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm",
+    "Y2","25MHz", 68, 42, lcsc='C13738'))
+
+# HR911105A RJ45 (right edge, horizontal)
 footprints.append(fp(
     "Connector_RJ:RJ45_Hanrun_HR911105A_Horizontal",
-    "J2","HR911105A", 82.5, 35, angle=270, lcsc='C12074'))
+    "J2","HR911105A", 90, 30, angle=270, lcsc='C12074'))
 
-# ── SN74AHCT125 level shifter ───────────────────────────────────────────────
+# ══ BOTTOM I/O ROW (y≈55..65) ════════════════════════════════════════════════
+# SN74AHCT125 level shifter — between MCU and LED headers
 footprints.append(fp(
     "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm",
-    "U4","SN74AHCT125", 35, 55, lcsc='C7484'))
+    "U4","SN74AHCT125", 50, 52, lcsc='C7484'))
 
-# ── OLED connector (bottom edge area) ────────────────────────────────────────
+# OLED header (bottom-left, near MCU I2C pins)
 footprints.append(fp(
     "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
-    "J9","OLED_SSD1306", 16, 58, lcsc='C124376'))
+    "J9","OLED_SSD1306", 32, 62, lcsc='C124376'))
 
-# ── LED output connectors (bottom edge) ─────────────────────────────────────
+# SWD debug header
+footprints.append(fp(
+    "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+    "J10","SWD_DEBUG", 40, 62, lcsc='C124375'))
+
+# LED output connectors (bottom, right of U4)
 for i in range(4):
     footprints.append(fp(
         "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
-        f"J{5+i}", f"LED_OUT_{i+1}", 52+i*8, 62, lcsc='C124375'))
+        f"J{5+i}", f"LED_OUT_{i+1}", 60+i*7, 62, lcsc='C124375'))
 
-# ── SWD debug header ─────────────────────────────────────────────────────────
-footprints.append(fp(
-    "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
-    "J10","SWD_DEBUG", 52, 55, lcsc='C124375'))
-
-# ── Buttons SW1, SW2 (user), SW3 (reset), SW4 (BOOTSEL) ────────────────────
-for i,(bx,by) in enumerate([(8,47),(17,47),(26,47),(35,47)]):
+# Buttons SW1/SW2 (user), SW3 (reset), SW4 (BOOTSEL)
+for i,(bx,by) in enumerate([(8,60),(15,60),(86,60),(86,52)]):
     ref = f"SW{i+1}"
     footprints.append(fp(
         "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC7xxJ",
@@ -331,31 +378,36 @@ for i,(bx,by) in enumerate([(8,47),(17,47),(26,47),(35,47)]):
 
 # ── Resistors (0402) - placed in clusters near their ICs ────────────────────
 r_placements = [
-    # (ref, value, x, y)
-    ('R1','750k',  46, 22),  # MT3608 FB top
-    ('R2','100k',  46, 26),  # MT3608 FB bot
-    ('R3','2k',    24, 22),  # TP4056 PROG
-    ('R4','5.1k',  14, 31),  # USB CC1
-    ('R5','5.1k',  14, 38),  # USB CC2
-    ('R6','330',   20, 28),  # LED resistor
-    ('R7','10k',   30, 30),  # CHRG pullup
-    ('R8','10k',   44, 50),  # RUN pullup
-    ('R9','27',    10, 40),  # USB D+
-    ('R10','27',   10, 43),  # USB D-
-    ('R11','12.4k',70, 22),  # W5500 EXRES0
-    ('R12','12.4k',70, 26),  # W5500 RCLK
-    ('R13','12.4k',70, 30),  # W5500 EXRES1
-    ('R14','10k',  53, 26),  # SPI MISO pullup
-    ('R15','10k',  57, 26),  # SPI CS pullup
-    ('R16','10k',  61, 26),  # W5500 RST pullup
-    ('R17','49.9', 76, 22),  # ETH CT1
-    ('R18','49.9', 76, 26),  # ETH CT2
-    ('R19','4.7k', 16, 52),  # I2C SCL pullup
-    ('R20','4.7k', 20, 52),  # I2C SDA pullup
-    ('R21','10k',   8, 42),  # BTN1 pullup
-    ('R22','10k',  17, 42),  # BTN2 pullup
-    ('R23','33',   43, 34),  # RP2354A VREG_AVDD filter
-    ('R24','1k',   34, 44),  # BOOTSEL series resistor
+    # (ref, value, x, y)  — positioned near their parent IC
+    # Power section (left column)
+    ('R1','750k',  16, 43),  # MT3608 FB top (above AMS1117 courtyard)
+    ('R2','100k',  18, 43),  # MT3608 FB bot
+    ('R3','2k',    24, 11),  # TP4056 PROG
+    ('R4','5.1k',  10, 9),   # USB CC1
+    ('R5','5.1k',  10, 19),  # USB CC2
+    ('R7','10k',   24, 17),  # CHRG pullup
+    ('R9','27',    25, 12),  # USB D+
+    ('R10','27',   25, 16),  # USB D-
+    # RP2354A (center)
+    ('R6','330',   28, 18),  # power-indicator LED resistor (near D2)
+    ('R8','10k',   40, 28),  # RUN pullup
+    ('R23','33',   46, 25),  # RP2354A VREG_AVDD filter (above U1)
+    ('R24','1k',   38, 40),  # BOOTSEL series resistor
+    # SPI pullups between RP2354A and W5500
+    ('R14','10k',  57, 28),  # SPI MISO pullup
+    ('R15','10k',  57, 30),  # SPI CS pullup
+    ('R16','10k',  57, 32),  # W5500 RST pullup
+    # W5500 (right cluster)
+    ('R11','12.4k',74, 26),  # W5500 EXRES0
+    ('R12','12.4k',76, 26),  # W5500 RCLK
+    ('R13','12.4k',78, 26),  # W5500 EXRES1
+    ('R17','49.9', 82, 26),  # ETH CT1
+    ('R18','49.9', 82, 28),  # ETH CT2
+    # Bottom I/O
+    ('R19','4.7k', 28, 58),  # I2C SCL pullup (OLED)
+    ('R20','4.7k', 30, 58),  # I2C SDA pullup (OLED)
+    ('R21','10k',  11, 56),  # BTN1 pullup
+    ('R22','10k',  18, 56),  # BTN2 pullup
 ]
 for ref,val,x,y in r_placements:
     footprints.append(fp("Resistor_SMD:R_0402_1005Metric", ref, val, x, y))
@@ -363,61 +415,66 @@ for ref,val,x,y in r_placements:
 # ── Capacitors (0402 unless noted) ───────────────────────────────────────────
 c_placements = [
     # (ref, val, x, y, fp_override)
-    ('C2','12pF',  32, 42, None),   # XTAL1 load
-    ('C3','12pF',  35, 42, None),   # XTAL2 load
-    ('C4','100nF', 72, 42, None),   # W5_VDD
-    ('C5','18pF',  55, 20, None),   # W5 XTAL1 load
-    ('C6','18pF',  65, 20, None),   # W5 XTAL2 load
-    ('C7','4.7uF',  57, 48, 'Capacitor_SMD:C_0402_1005Metric'),  # RP2354A 1V1
-    ('C8','100nF',  60, 48, None),   # RP2354A VREG_AVDD
-    ('C9','4.7uF',  63, 48, 'Capacitor_SMD:C_0402_1005Metric'),  # RP2354A 1V1
-    ('C10','4.7uF', 66, 48, 'Capacitor_SMD:C_0402_1005Metric'),  # RP2354A 1V1
-    # Power section
-    ('C31','10uF',  8, 20, 'Capacitor_SMD:C_0805_2012Metric'),  # VUSB bulk
-    ('C32','100nF', 12, 20, None),
-    ('C33','10uF',  11, 53, 'Capacitor_SMD:C_0805_2012Metric'),  # VBAT bulk
-    ('C34','10uF',  62, 10, 'Capacitor_SMD:C_0805_2012Metric'), # 5V bulk
-    ('C35','100nF', 64, 12, None),
-    ('C36','10uF',  60, 8, 'Capacitor_SMD:C_0805_2012Metric'),  # 3V3 bulk
-    ('C37','100nF', 64, 8, None),
-    ('C38','100nF', 68, 8, None),
-    # RP2354A bypass
-    ('C39','100nF', 42, 32, None),
-    ('C40','100nF', 46, 32, None),
-    ('C41','100nF', 50, 32, None),
-    ('C42','100nF', 54, 32, None),
-    ('C43','100nF', 42, 48, None),
-    ('C44','100nF', 46, 48, None),
-    ('C45','100nF', 50, 48, None),
-    ('C46','4.7uF', 54, 48, 'Capacitor_SMD:C_0402_1005Metric'),
-    # W5500 bypass
-    ('C47','100nF', 54, 28, None),
-    ('C48','100nF', 56, 28, None),
-    ('C49','100nF', 60, 43, None),
-    ('C50','100nF', 62, 43, None),
-    ('C51','4.7uF', 68, 43, 'Capacitor_SMD:C_0402_1005Metric'),
-    # Level shifter bypass
-    ('C52','100nF', 40, 55, None),
+    # Y1 12MHz crystal load caps — flanking Y1 at (46,42)
+    ('C2','12pF',  43, 42, None),
+    ('C3','12pF',  49, 42, None),
+    # Y2 25MHz crystal load caps — flanking Y2 at (68,42)
+    ('C5','18pF',  65, 42, None),
+    ('C6','18pF',  71, 42, None),
+    # Power section bulk/decoupling (left column)
+    ('C31','10uF',  13, 9, 'Capacitor_SMD:C_0805_2012Metric'),  # VUSB bulk
+    ('C32','100nF', 16, 9, None),
+    ('C33','10uF',  12, 32, 'Capacitor_SMD:C_0805_2012Metric'),  # VBAT bulk
+    ('C34','10uF',  24, 38, 'Capacitor_SMD:C_0805_2012Metric'),  # 5V bulk (MT3608 out)
+    ('C35','100nF', 24, 42, None),
+    ('C36','10uF',  25, 48, 'Capacitor_SMD:C_0805_2012Metric'),  # 3V3 bulk (AMS1117 out)
+    ('C37','100nF', 25, 50, None),
+    ('C38','100nF', 25, 52, None),
+    # RP2354A decoupling corners at cheb=6 from U1 center (clears 4.1mm CrtYd)
+    ('C39','100nF', 39, 26, None),
+    ('C40','100nF', 52, 26, None),
+    ('C41','100nF', 39, 38, None),
+    ('C42','100nF', 52, 38, None),
+    ('C43','100nF', 38, 30, None),
+    ('C44','100nF', 38, 34, None),
+    ('C45','100nF', 54, 34, None),
+    ('C46','4.7uF', 54, 30, 'Capacitor_SMD:C_0402_1005Metric'),
+    # RP2354A 1V1 core regulator caps
+    ('C7','4.7uF',  46, 26, 'Capacitor_SMD:C_0402_1005Metric'),
+    ('C8','100nF',  44, 26, None),   # VREG_AVDD
+    ('C9','4.7uF',  48, 26, 'Capacitor_SMD:C_0402_1005Metric'),
+    ('C10','4.7uF', 42, 26, 'Capacitor_SMD:C_0402_1005Metric'),
+    # W5500 decoupling (LQFP-48 CrtYd extends 5.15mm) — caps at cheb≥6.5
+    ('C4','100nF',  75, 32, None),   # W5_VDD
+    ('C47','100nF', 63, 25, None),
+    ('C48','100nF', 73, 25, None),
+    ('C49','100nF', 63, 39, None),
+    ('C50','100nF', 73, 39, None),
+    ('C51','4.7uF', 75, 34, 'Capacitor_SMD:C_0402_1005Metric'),
+    # Level shifter bypass (U4 at 50,52)
+    ('C52','100nF', 55, 52, None),
 ]
 for item in c_placements:
     ref,val,x,y = item[0],item[1],item[2],item[3]
     fp_lib = item[4] if item[4] else 'Capacitor_SMD:C_0402_1005Metric'
     footprints.append(fp(fp_lib, ref, val, x, y))
 
-# ── RP2354A internal core regulator inductor ────────────────────────────────
+# ── RP2354A internal core regulator inductor (next to U1) ──────────────────
 footprints.append(fp(
     "Inductor_SMD:L_0805_2012Metric",
-    "L2","3.3uH", 62, 52, lcsc='C25923'))
+    "L2","3.3uH", 55, 24, lcsc='C25923'))
 
-# ── LEDs ─────────────────────────────────────────────────────────────────────
-footprints.append(fp("LED_SMD:LED_0402_1005Metric","D2","LED_GREEN",26,28,lcsc='C72043'))
+# ── Power-on indicator LED ─────────────────────────────────────────────────
+footprints.append(fp("LED_SMD:LED_0402_1005Metric","D2","LED_GREEN",28,20,lcsc='C72043'))
 
-# ── Schottky diode placeholder for power OR-ing ──────────────────────────────
-footprints.append(fp("Diode_SMD:D_SOD-123","D1","SS14",48,18,lcsc='C2480'))
-
-# ── GND copper pours ──────────────────────────────────────────────────────────
-gnd_zone_f = zone("GND","F.Cu", [(1,1),(W-1,1),(W-1,H-1),(1,H-1)])
-gnd_zone_b = zone("GND","B.Cu", [(1,1),(W-1,1),(W-1,H-1),(1,H-1)])
+# ── Copper pours (4-layer stackup) ───────────────────────────────────────────
+# F.Cu / B.Cu: signal only (no plane pour — freerouting needs the copper free)
+# In1.Cu: solid VCC3V3 plane with a VCC5V island over the power-input column
+# In2.Cu: solid GND plane (closer to B.Cu for short signal return paths)
+vcc3v3_zone_i1 = zone("VCC3V3","In1.Cu",[(1,1),(W-1,1),(W-1,H-1),(1,H-1)])
+vcc5v_zone_i1 = zone("VCC5V","In1.Cu", [(1,1),(30,1),(30,45),(1,45)], priority=2)
+gnd_zone_i2 = zone("GND","In2.Cu",[(1,1),(W-1,1),(W-1,H-1),(1,H-1)])
+power_pours = [vcc3v3_zone_i1, vcc5v_zone_i1, gnd_zone_i2]
 
 # ─── Generate PCB ─────────────────────────────────────────────────────────────
 
@@ -427,7 +484,11 @@ STACKUP = '''  (setup
       (layer "F.Paste" (type "Top Solder Paste"))
       (layer "F.Mask" (type "Top Solder Mask") (thickness 0.01))
       (layer "F.Cu" (type "copper") (thickness 0.035))
-      (layer "dielectric 1" (type "core") (thickness 1.51) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "dielectric 1" (type "prepreg") (thickness 0.2104) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "In1.Cu" (type "copper") (thickness 0.0152))
+      (layer "dielectric 2" (type "core") (thickness 1.065) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
+      (layer "In2.Cu" (type "copper") (thickness 0.0152))
+      (layer "dielectric 3" (type "prepreg") (thickness 0.2104) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
       (layer "B.Cu" (type "copper") (thickness 0.035))
       (layer "B.Mask" (type "Bottom Solder Mask") (thickness 0.01))
       (layer "B.Paste" (type "Bottom Solder Paste"))
@@ -449,6 +510,8 @@ pcb = ['(kicad_pcb (version 20230121) (generator pcbnew)',
        '',
        '  (layers',
        '    (0 "F.Cu" signal)',
+       '    (1 "In1.Cu" signal)',
+       '    (2 "In2.Cu" signal)',
        '    (31 "B.Cu" signal)',
        '    (32 "B.Adhes" user)',
        '    (33 "F.Adhes" user)',
@@ -488,13 +551,18 @@ pcb.extend(silks)
 pcb.extend(footprints)
 
 # Add copper pours
-pcb.append(gnd_zone_f)
-pcb.append(gnd_zone_b)
+for _pour in power_pours:
+    pcb.append(_pour)
+
+# Power-plane stitching vias: DISABLED — let freerouting place its own vias.
+# Pre-injected stitching vias clogged escape paths on the tight F.Cu area.
+_plane_vias = []
 
 # Closing
 pcb.append(')')
 
 out = '\n'.join(pcb)
+print(f"  + {len(_plane_vias)} plane-stitching vias on power pads")
 pcb_path = DIR / f"{PROJ}.kicad_pcb"
 with open(pcb_path,'w') as f:
     f.write(out)
