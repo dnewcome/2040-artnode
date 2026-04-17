@@ -1,0 +1,180 @@
+WARNING: KICAD7_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap_external>:999=>/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap>:488]
+WARNING: KICAD6_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap_external>:999=>/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap>:488]
+WARNING: KICAD8_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap_external>:999=>/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap>:488]
+WARNING: KICAD_SYMBOL_DIR environment variable is missing, so the default KiCad symbol libraries won't be searched. @ [/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap_external>:999=>/home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap>:488]
+WARNING: fp-lib-table file was not found. Component footprints are not available.
+WARNING: fp-lib-table file was not found. Component footprints are not available.
+WARNING: fp-lib-table file was not found. Component footprints are not available.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:605.
+WARNING: Random tag A5Vo6ek2dK generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:605.
+WARNING: Random tag 1YXyjPqsoJ generated for R.
+WARNING: Missing tag on USB_C_Receptacle instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:82.
+WARNING: Random tag G2xkQaSWWe generated for USB_C_Receptacle.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:97.
+WARNING: Random tag eo2umNDk_a generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:97.
+WARNING: Random tag JI4oxyYDs7 generated for R.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag OYWfgIysp1 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag KcYsmi159p generated for C.
+WARNING: Missing tag on TP4056-42-ESOP8 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:112.
+WARNING: Random tag 9cWIsQoqvQ generated for TP4056-42-ESOP8.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:129.
+WARNING: Random tag Ks1lVEE1mM generated for R.
+WARNING: Missing tag on LED instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:134.
+WARNING: Random tag 9eTAwrvG5B generated for LED.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:135.
+WARNING: Random tag RqEwcp4RF_ generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:142.
+WARNING: Random tag W7YxOtpQFM generated for R.
+WARNING: Missing tag on Conn_01x02 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:147.
+WARNING: Random tag 9BMsOgx7US generated for Conn_01x02.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag kuFdVaMM6d generated for C.
+WARNING: Missing tag on MT3608 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:162.
+WARNING: Random tag xWlaYXsWiQ generated for MT3608.
+WARNING: Missing tag on L instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:177.
+WARNING: Random tag DuX8mWDsFY generated for L.
+WARNING: Missing tag on D_Schottky instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:182.
+WARNING: Random tag hYfxwd1Uzs generated for D_Schottky.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:187.
+WARNING: Random tag KxM3qR1aap generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:188.
+WARNING: Random tag 0D3385rHpP generated for R.
+WARNING: Missing tag on AMS1117-3.3 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:201.
+WARNING: Random tag SNnSe0N1UR generated for AMS1117-3.3.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag tPOKDD8oxu generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag Nic8MJqvkJ generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag hCTMLUf9Pb generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag XmmFgkieI0 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag QFU2CXRt5e generated for C.
+WARNING: Missing tag on RP2354A instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:225.
+WARNING: Random tag bJjbsYOUe7 generated for RP2354A.
+WARNING: Missing tag on Crystal instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:268.
+WARNING: Random tag pPzDE767sr generated for Crystal.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:275.
+WARNING: Random tag wQnpum2nQg generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:275.
+WARNING: Random tag r0NdCkEFda generated for C.
+WARNING: Missing tag on L instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:304.
+WARNING: Random tag gYvyHoG2G3 generated for L.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:309.
+WARNING: Random tag twb6lDLmpa generated for R.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag Uq88cCbuWR generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag 9_oqMIMral generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag wjGdriZ7So generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag aZs_4J5i9L generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag GZSUzEMqNd generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag QBPnQq6J5m generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag nV38KVEEGg generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag QoYEgiC7EQ generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag 7lS3ex77X2 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag _3mp1QwLB9 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag dIZemv3mvt generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag 3V2i6xuICp generated for C.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:325.
+WARNING: Random tag KGuxgCu6e8 generated for R.
+WARNING: Missing tag on SW_Push instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:329.
+WARNING: Random tag i5mLvgthEV generated for SW_Push.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:336.
+WARNING: Random tag 3uEuHi4EaY generated for R.
+WARNING: Missing tag on SW_Push instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:340.
+WARNING: Random tag DasXY6knp9 generated for SW_Push.
+WARNING: Missing tag on W5500 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:362.
+WARNING: Random tag K43ERN_O1C generated for W5500.
+WARNING: Missing tag on Crystal instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:384.
+WARNING: Random tag JulezcdVQg generated for Crystal.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:390.
+WARNING: Random tag 71IyhWixUY generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:390.
+WARNING: Random tag 1UbQBzPm9C generated for C.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:397.
+WARNING: Random tag N1oSRnqiRR generated for R.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag ceuJGqwRQE generated for C.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:430.
+WARNING: Random tag 4eUSjuLyoC generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:430.
+WARNING: Random tag 2YBJNFaH9W generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:430.
+WARNING: Random tag mXq9_sSENB generated for R.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag WkgFdiN6oT generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag W0qJwA44PI generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag GzMTHAzlZ1 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag 6b7tTsVOO3 generated for C.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag xaX48yrV2c generated for C.
+WARNING: Missing tag on RJ45_Hanrun_HR911105A_Horizontal instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:446.
+WARNING: Random tag UscTkhB1Zb generated for RJ45_Hanrun_HR911105A_Horizontal.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:463.
+WARNING: Random tag qo5nxNvpMV generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:463.
+WARNING: Random tag cCRjkh0A5R generated for R.
+WARNING: Missing tag on 74AHCT125 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:474.
+WARNING: Random tag yeuWbJhWS1 generated for 74AHCT125.
+WARNING: Missing tag on C instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:71.
+WARNING: Random tag t7bdLUIKUv generated for C.
+WARNING: Missing tag on Conn_01x03 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:503.
+WARNING: Random tag IrdWN7Q4jj generated for Conn_01x03.
+WARNING: Missing tag on Conn_01x03 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:503.
+WARNING: Random tag YmPG5w1toA generated for Conn_01x03.
+WARNING: Missing tag on Conn_01x03 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:503.
+WARNING: Random tag GZ0lSlHBLF generated for Conn_01x03.
+WARNING: Missing tag on Conn_01x03 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:503.
+WARNING: Random tag hcPLC8x2MC generated for Conn_01x03.
+WARNING: Missing tag on Conn_01x04 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:517.
+WARNING: Random tag 2F0X273vfD generated for Conn_01x04.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:527.
+WARNING: Random tag 4RaeK7X19R generated for R.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:527.
+WARNING: Random tag dtJW9AiBrc generated for R.
+WARNING: Missing tag on SW_Push instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:539.
+WARNING: Random tag Acgieyz89I generated for SW_Push.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:544.
+WARNING: Random tag jKSt7MwxdU generated for R.
+WARNING: Missing tag on SW_Push instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:539.
+WARNING: Random tag oaRmF6hnd2 generated for SW_Push.
+WARNING: Missing tag on R instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:544.
+WARNING: Random tag 3ZuMm3QYOV generated for R.
+WARNING: Missing tag on Conn_01x03 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:549.
+WARNING: Random tag 82G4dkQOlZ generated for Conn_01x03.
+WARNING: Missing tag on usb_input1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:610.
+WARNING: Missing tag on mcu_rp2354a1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:615.
+WARNING: Missing tag on ldo_3v3_1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:613.
+WARNING: Missing tag on lipo_charger1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:611.
+WARNING: Missing tag on boost_converter1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:612.
+WARNING: Missing tag on led_outputs1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:629.
+WARNING: Missing tag on oled_i2c1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:631.
+WARNING: Missing tag on buttons_swd1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:633.
+WARNING: Missing tag on ethernet_w5500_1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:622.
+WARNING: Missing tag on rj45_magjack1 instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/gen_schematic.py:627.
+WARNING: Missing tag on  instantiated at /home/dan/sandbox/dnewcome/2040-artnode/2040-skidl/<frozen importlib._bootstrap>:488.
+INFO: 170 warnings found while generating netlist.
+INFO: 0 errors found while generating netlist.
+
+INFO: 170 warnings found while generating SVG.
+INFO: 0 errors found while generating SVG.
+
